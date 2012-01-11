@@ -20,7 +20,14 @@
 		}
 		this.isBiggerThan = function(b){
 			if(this.equals(b)) return false;
-			return true;
+			if(this.__sign==false&&b.__sign==true) return true;
+			if(this.__sign==true&&b.__sign==false) return false;
+			if(this.__numberData.length>b.__numberData.length) return !this.__sign;
+			if(this.__numberData.length<b.__numberData.length) return this.__sign;
+			for(var i=this.__numberData.length;i--;)
+				if(this.__numberData[i]>b.__numberData[i]) return !this.__sign;
+				else if(this.__numberData[i]<b.__numberData[i]) return this.__sign;
+			return false; //can never be happen.
 		}
 		this.getSign = function(){
 			return this.__sign;
@@ -65,7 +72,7 @@
 			return bc;
 		}
 		this.minus = function(b){
-			
+			//incomplete
 		}
 	
 		var i;
