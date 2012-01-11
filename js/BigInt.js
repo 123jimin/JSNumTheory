@@ -26,7 +26,7 @@
 			if(this.__numberData.length<b.__numberData.length) return this.__sign;
 			for(var i=this.__numberData.length;i--;)
 				if(this.__numberData[i]>b.__numberData[i]) return !this.__sign;
-				else if(this.__numberData[i]<b.__numberData[i]) return this.__sign;
+				else if(b.__numberData[i]>this.__numberData[i]) return this.__sign;
 			return false; //can never be happen.
 		}
 		this.getSign = function(){
