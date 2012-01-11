@@ -107,4 +107,3 @@
 		}
 	}
 }());
-console.comment('numtheory.js loaded - BigInt class');
