@@ -14,6 +14,12 @@
 			return (this.__sign?'-':'')+(s.length?s:'0');
 		}
 		this.equals = function(b){
+			if(typeof b == 'number'){
+				if(b==0) return this.__numberData.length==1&&this.__numberData[0]==0;
+				if(b<0&&!this.__sign) return false;
+				if(Math.abs(b)<MAX_POW) return this.__numberData.length==1&&this.__numberData[0]==Math.abs(b);
+				return this.equals(new BigInt(b));
+			}
 			if(this.__sign!=b.__sign||this.__numberData.length!=b.__numberData.length) return false;
 			for(var i=0;i<this.__numberData.length;i++) if(this.__numberData[i]!=b.__numberData[i]) return false;
 			return true;
@@ -49,6 +55,7 @@
 			return 0;
 		}
 		this.add = function(b){
+			if(b.equals(0)) return this.clone();
 			var bc=b.clone(), c=0, i;
 			if(this.__sign^bc.__sign){
 				var ts=this.__sign; __sign=false;
@@ -73,6 +80,14 @@
 		}
 		this.minus = function(b){
 			//incomplete
+			if(b.equals(0)) return this.clone();
+			var bc=b.clone();
+			if(bc.__sign){
+				if(!this.__sign){
+					bc.__sign = false;
+					
+				}
+			}
 		}
 	
 		var i;
