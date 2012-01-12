@@ -57,7 +57,7 @@
 		this.add = function(b){
 			if(b.equals(0)) return this.clone();
 			var bc=b.clone(), c=0, i;
-			if(this.__sign^bc.__sign){
+			if(this.__sign!=bc.__sign){
 				var ts=this.__sign; __sign=false;
 				bc.__sign = false;
 				var rs=this.minus(bc);
@@ -79,15 +79,16 @@
 			return bc;
 		}
 		this.minus = function(b){
-			//incomplete
 			if(b.equals(0)) return this.clone();
-			var bc=b.clone();
-			if(bc.__sign){
-				if(!this.__sign){
-					bc.__sign = false;
-					
-				}
+			var bc,ts=this.__sign;
+			if(this.__sign!=b.__sign){
+				this.__sign = b.__sign = false;
+				bc = this.add(b);
+				b.__sign = !(this.__sign=ts);
+				if(ts) bc.__sign = !bc.__sign;
+				return bc;
 			}
+			//incomplete
 		}
 	
 		var i;
