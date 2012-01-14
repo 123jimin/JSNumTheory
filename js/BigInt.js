@@ -54,43 +54,104 @@
 			}
 			return 0;
 		}
+		var addArr = function(x,y){
+			if(x.length<y.length) return addArr(y,x);
+			var i,z=[],c=0;
+			for(i=0;i<y.length;i++){
+				z[i]=x[i]+y[i]+c;
+				if(z[i]>=MAX_POW) z[i]-=MAX_POW,c=1;
+				else c=0;
+			}
+			for(;i<x.length;i++){
+				z[i]=x[i]+c;
+				if(z[i]>=MAX_POW) z[i]-=MAX_POW,c=1;
+				else c=0;
+			}
+			if(c) z[i]=1;
+			return z;
+		}
 		this.add = function(b){
 			if(b.equals(0)) return this.clone();
-			var bc=b.clone(), c=0, i;
-			if(this.__sign!=bc.__sign){
-				var ts=this.__sign; __sign=false;
-				bc.__sign = false;
-				var rs=this.minus(bc);
+			var ts=this.__sign;
+			if(this.__sign!=b.__sign){
+				this.__sign=false;
+				b.__sign = false;
+				var rs=this.minus(b);
 				if(this.__sign=ts) rs.__sign = !rs.__sign;
+				b.__sign = !ts;
 				return rs;
 			}
-			for(i=0;i<this.__numberData.length;i++){
-				if(c+this.__numberData[i]){
-					if(!bc.__numberData[i]) bc.__numberData[i]=c+this.__numberData[i];
-					else bc.__numberData[i]+=c+this.__numberData[i];
-					if(bc.__numberData[i]>=MAX_POW) bc.__numberData[i]-=MAX_POW,c=1;
-					else c=0;
-				}
-			}
-			for(;c&&i<bc.__numberData[i];i++){
-				bc.__numberData[i]++; if(bc.__numberData[i]==MAX_POW) bc.__numberData[i]=0,c=0;
-			}
-			if(c) bc.__numberData[i]=1;
-			return bc;
+			return new BigInt([ts,addArr(this.__numberData,b.__numberData)]);
 		}
-		this.minus = function(b){
+		var minusArr = function(x,y){
+			var i,z=[],c=0;
+			for(i=0;i<y.length;i++){
+				z[i] = x[i]-y[i]-c;
+				if(z[i]<0){
+					z[i]+=MAX_POW;
+					c=1;
+				}else c=0;
+			}
+			for(;i<x.length;i++){
+				z[i] = x[i]-c;
+				if(z[i]<0){
+					z[i]+=MAX_POW;
+					c=1;
+				}else c=0;
+			}
+			return z;
+		}
+		this.subtract = function(b){
 			if(b.equals(0)) return this.clone();
-			var bc,ts=this.__sign;
+			var ts=this.__sign;
 			if(this.__sign!=b.__sign){
 				this.__sign = b.__sign = false;
-				bc = this.add(b);
+				var bc = this.add(b);
 				b.__sign = !(this.__sign=ts);
 				if(ts) bc.__sign = !bc.__sign;
 				return bc;
 			}
+			this.__sign = b.__sign = false;
+			var x,y,c=0,d=true,i;
+			if(this.isBiggerThan(b)) x=this.__numberData, y=b.__numberData, d=false;
+			else x=b.__numberData, y=this.__numberData;
+			this.__sign = b.__sign = ts;
+			return new BigInt([ts!=d,minusArr(x,y)]);
+		}
+		var multiplyKaratsuba = function(x,y){
+			if(x.length<y.length) return multiplyKaratsuba(y,x);
+			if(x.length==1){
+				var z=x[0]*y[0];
+				if(z<MAX_POW) return [z];
+				return [z%MAX_POW,~~(z/MAX_POW)];
+			}
+			if(y.length==1){
+				if(y[0]==0) return [0];
+				for(var i=0,c=0,yd=y[0],z=[];i<x.length;i++){
+					z[i]=x[i]*yd+c;
+					c=~~(z[i]/MAX_POW);
+					z[i]%=MAX_POW;
+				}
+				if(c) z[i]=c;
+				return z;
+			}else{
+				var yl2=~~(y.length/2);
+				var x2=x.slice(0,yl2),y2=y.slice(0,yl2),x1=x.slice(yl2),y1=y.slice(yl2);
+				var A=multiplyKaratsuba(x1,y1),B=multiplyKaratsuba(x2,y2),C=multiplyKaratsuba(addArr(x1,x2),addArr(y1,y2));
+				var K=minusArr(minusArr(C,A),B),i;
+				for(i=yl2;i--;){
+					A.unshift(0,0);
+					K.unshift(0);
+				}
+				return addArr(A,addArr(K,B));
+			}
+		}
+		this.multiply = function(b){
+			return new BigInt([this.__sign!=b.__sign, multiplyKaratsuba(this.__numberData,b.__numberData)]);
+		}
+		this.divide = function(b){
 			//incomplete
 		}
-	
 		var i;
 		if(o==null) o=0;
 		switch(typeof o){
@@ -106,7 +167,16 @@
 					if(o<0){
 						o=-o; this.__sign=true;
 					}
-					this.__numberData = [Math.floor(o)];
+					this.__numberData = [~~o];
+				}else if(-Number.MAX_VALUE<o&&o<Number.MAX_VALUE){
+					if(o<0){
+						o=-o; this.__sign=true;
+					}
+					o=Math.floor(o);
+					while(o>0){
+						this.__numberData.push(o%MAX_POW);
+						o=Math.floor(o/MAX_POW);
+					}
 				}
 				break;
 			case 'string':
