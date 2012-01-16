@@ -2,19 +2,21 @@
 	var MAX_DIGIT = 7, MAX_POW = Math.pow(10,MAX_DIGIT);
 	window.BigInt = function(o){
 		this.__sign = false; this.__numberData = [];
-	
-		this.dumpData = function(){
-			var a=[],i;
-			for(i=0;i<this.__numberData.length;i++) a[i]=this.__numberData[i];
-			return [this.__sign,a];
+		
+		var copyArr = function(a){
+			for(var b=[],i=a.length;i--;b[i]=a[i]);
+			return b;
 		}
-		this.clone = function(){return new BigInt(this.dumpData())}
+		this.dumpData = function(){
+			return [this.__sign,copyArr(this.__numberData)];
+		}
+		this.clone = function(){return new BigInt([this.__sign,copyArr(this.__numberData)])}
 		this.toString = function(){
 			var s=this.dumpData()[1].reverse().map(function(a){a=''+a;while(a.length<MAX_DIGIT)a='0'+a;return a}).join('').replace(/^(0+)/,'');
 			return (this.__sign?'-':'')+(s.length?s:'0');
 		}
 		this.equals = function(b){
-			if(typeof b == 'number'){
+			if((typeof b)=='number'){
 				if(b==0) return this.__numberData.length==1&&this.__numberData[0]==0;
 				if(b<0&&!this.__sign) return false;
 				if(Math.abs(b)<MAX_POW) return this.__numberData.length==1&&this.__numberData[0]==Math.abs(b);
@@ -24,16 +26,18 @@
 			for(var i=0;i<this.__numberData.length;i++) if(this.__numberData[i]!=b.__numberData[i]) return false;
 			return true;
 		}
+		var isFirstBigger = function(x,y){
+			if(x.length>y.length) return true;
+			if(x.length<y.length) return false;
+			for(var i=x.length;i--;)
+				if(x[i]>y[i]) return true;
+				else if(x[i]<y[i]) return false;
+			return false; //can never be happen.
+		}
 		this.isBiggerThan = function(b){
 			if(this.equals(b)) return false;
-			if(this.__sign==false&&b.__sign==true) return true;
-			if(this.__sign==true&&b.__sign==false) return false;
-			if(this.__numberData.length>b.__numberData.length) return !this.__sign;
-			if(this.__numberData.length<b.__numberData.length) return this.__sign;
-			for(var i=this.__numberData.length;i--;)
-				if(this.__numberData[i]>b.__numberData[i]) return !this.__sign;
-				else if(b.__numberData[i]>this.__numberData[i]) return this.__sign;
-			return false; //can never be happen.
+			if(this.__sign!=b.__sign) return b.__sign;
+			return isFirstBigger(this.__numberData,b.__numberData)!=this.__sign;
 		}
 		this.getSign = function(){
 			return this.__sign;
@@ -99,6 +103,7 @@
 					c=1;
 				}else c=0;
 			}
+			while(z[z.length-1]==0) z.pop();
 			return z;
 		}
 		this.subtract = function(b){
@@ -149,8 +154,54 @@
 		this.multiply = function(b){
 			return new BigInt([this.__sign!=b.__sign, multiplyKaratsuba(this.__numberData,b.__numberData)]);
 		}
+		//Should re-implement this. (too slow)
+		var divArr = function(x,y){
+			var i,z,c,a;
+			if(isFirstBigger(y,x)) return false;
+			if(x.length==1) return [~~(x[0]/y[0])];
+			if(y.length==1){
+				if(y[0]==0) throw new Error('Division by zero!');
+				if(y[0]==1){
+					for(i=x.length,z=[];i--;z[i]=x[i]); return z;
+				}
+				if(y[0]==2){
+					for(c=0,i=x.length,z=[];i--;){
+						z[i]=x[i]+c;
+						if(z[i]%2==1) c=MAX_POW; else c=0;
+						z[i]=~~(z[i]/2);
+					}
+					if(z[z.length-1]==0) z.pop();
+					return z;
+				}
+			}
+			z=copyArr(y); a=[1];
+			while(isFirstBigger(x,z)){
+				z.unshift(0);
+				a.unshift(0);
+			}
+			z.shift(); a.shift();
+			for(i=x.length==z.length?~~((x[x.length-1]-1)/(z[z.length-1]+1)):~~((x[x.length-1]*MAX_POW+x[x.length-2]-1)/(z[z.length-1]+1));i<MAX_POW;i++)
+				if(!isFirstBigger(x,multiplyKaratsuba(z,[i]))) break;
+			i--;
+			return addArr(multiplyKaratsuba(a,[i]),divArr(minusArr(x,multiplyKaratsuba(z,[i])),y));
+		}
 		this.divide = function(b){
-			//incomplete
+			return new BigInt([this.__sign!=b.__sign, divArr(this.__numberData,b.__numberData)]);
+		}
+		//Should re-implement this. (too slow)
+		var modArr = function(x,y){
+			return minusArr(x,multiplyKaratsuba(y,divArr(x,y)));
+		}
+		this.mod = function(b){
+			if(b.__sign) throw new Error('b is negative in BigInt.mod(BigInt b)');
+			if(this.__sign){
+				this.__sign = false;
+				var result = b.minus(this.mod(b));
+				this.__sign = true;
+				if(result.equals(b)) return new BigInt(0);
+				return result;
+			}
+			return new BigInt([false,modArr(this.__numberData,b.__numberData)]);
 		}
 		var i;
 		if(o==null) o=0;
@@ -158,6 +209,7 @@
 			case 'object':
 				try{
 					this.__sign=!!o[0];
+					if(o[1].length==1&&o[1][0]==0) this.__sign=false;
 					for(i=0;i<o[1].length;i++)
 						this.__numberData.push(o[1][i]);
 				}catch(e){this.__sign=false;this.__numberData=[0];}
