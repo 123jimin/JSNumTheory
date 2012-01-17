@@ -156,23 +156,22 @@
 		}
 		//Should re-implement this. (too slow)
 		var divArr = function(x,y){
-			var i,z,c,a;
+			var i,j,z,c,a;
 			if(isFirstBigger(y,x)) return false;
 			if(x.length==1) return [~~(x[0]/y[0])];
 			if(y.length==1){
-				if(y[0]==0) throw new Error('Division by zero!');
-				if(y[0]==1){
+				j=y[0];
+				if(j==0) throw new Error('Division by zero!');
+				if(j==1){
 					for(i=x.length,z=[];i--;z[i]=x[i]); return z;
 				}
-				if(y[0]==2){
-					for(c=0,i=x.length,z=[];i--;){
-						z[i]=x[i]+c;
-						if(z[i]%2==1) c=MAX_POW; else c=0;
-						z[i]=~~(z[i]/2);
-					}
-					if(z[z.length-1]==0) z.pop();
-					return z;
+				for(c=0,i=x.length,z=[];i--;){
+					z[i]=x[i]+c;
+					if(z[i]%j) c=MAX_POW*(z[i]%j);
+					z[i]=~~(z[i]/j);
 				}
+				if(z[z.length-1]==0) z.pop();
+				return z;
 			}
 			z=copyArr(y); a=[1];
 			while(isFirstBigger(x,z)){
