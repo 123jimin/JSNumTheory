@@ -1,6 +1,6 @@
 (function(){
 	var MAX_DIGIT = 7, MAX_POW = Math.pow(10,MAX_DIGIT);
-	window.BigInt = function(o){
+	BigInt = function(o){
 		this.__sign = false; this.__numberData = [];
 		
 		var copyArr = function(a){
@@ -156,11 +156,11 @@
 		}
 		//Should re-implement this. (too slow)
 		var divArr = function(x,y){
-			var i,j,z,c,a;
+			var i,z,c,a;
 			if(isFirstBigger(y,x)) return false;
 			if(x.length==1) return [~~(x[0]/y[0])];
 			if(y.length==1){
-				j=y[0];
+				var j=y[0];
 				if(j==0) throw new Error('Division by zero!');
 				if(j==1){
 					for(i=x.length,z=[];i--;z[i]=x[i]); return z;
@@ -189,6 +189,11 @@
 		}
 		//Should re-implement this. (too slow)
 		var modArr = function(x,y){
+			if(y.length==1){
+				var y0=y[0];
+				if(y0==2||y0==4||y0==5||y0==8||y0==10||y0==16||y0==20||y0==25||y0==32||y0==40
+				||y0==64||y0==100||y0==128||y0==256||y0==512||y0==1000||y0==1024||y0==10000||y0==100000) return [x[0]%y0];
+			}
 			return minusArr(x,multiplyKaratsuba(y,divArr(x,y)));
 		}
 		this.mod = function(b){
