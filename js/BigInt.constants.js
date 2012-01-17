@@ -1,10 +1,10 @@
 (function(){
-	window.BigInt.ZERO = new BigInt(0);
-	window.BigInt.ONE = new BigInt(1);
-	window.BigInt.TWO = new BigInt(2);
-	window.BigInt.THREE = new BigInt(3);
-	window.BigInt.THEANSWER = new BigInt(42);
-	window.BigInt.PRIMES = [
+	BigInt.ZERO = new BigInt(0);
+	BigInt.ONE = new BigInt(1);
+	BigInt.TWO = new BigInt(2);
+	BigInt.THREE = new BigInt(3);
+	BigInt.THEANSWER = new BigInt(42);
+	BigInt.PRIMES = [
 		new BigInt(3),
 		new BigInt(7),
 		new BigInt(13),
@@ -39,5 +39,5 @@
 		new BigInt('651271417557711039459424454473029499910068546379'),
 		new BigInt('742728711398362170741499690272074900169329336219')
 	];
-	window.BigInt.PRIMES.random = function(){return window.BigInt.PRIMES[~~(Math.random()*window.BigInt.PRIMES.length)]};
+	BigInt.PRIMES.random = function(){return BigInt.PRIMES[~~(Math.random()*BigInt.PRIMES.length)]};
 }());
